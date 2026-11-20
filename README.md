@@ -1,10 +1,13 @@
 # Duplicate detection with cross-shop IDF-weighted tokens and LSH
 
-Individual assignment for Text Mining & Recommender Systems (Erasmus University Rotterdam), Cristina Marín Rocha.
+Individual assignment for Text Mining & Recommender Systems
+
+Cristina Marín Rocha (681737).
 
 ## The project
 
-The data has 1,624 TV descriptions from four web shops (Amazon, Newegg, Best Buy, TheNerds). Comparing all pairs (about 1.3 million) does not scale, so I use LSH (own implementation, no LSH library) to select candidate pairs and only compare those.
+The data has 1,624 TV descriptions from four web shops (Amazon, Newegg, Best Buy, TheNerds). 
+Comparing all pairs (about 1.3 million) does not scale, LSH is used (own implementation) to select candidate pairs and only compare those.
 
 The main idea is the representation that LSH runs on:
 
@@ -13,7 +16,7 @@ The main idea is the representation that LSH runs on:
 - each token gets a weight `w(t) = idf(t)^a`, so rare tokens like model codes count a lot and common ones like `1080p` or `hdtv` almost not
 - the weights are put into the sets by repeating every token `m(t)` times (proportional to its weight), so normal min-hashing estimates the weighted Jaccard similarity
 
-The candidate pairs are then classified with a logistic regression on 4 features from the titles (title similarity, shared code, conflicting code, conflicting units), followed by a clustering step (MSM style single linkage) so the predicted duplicates are transitive.
+The candidate pairs are then classified with a logistic regression on 4 features from the titles (title similarity, shared code, conflicting code, conflicting units), followed by a clustering step (MSM paper style) so the predicted duplicates are transitive.
 
 As baseline I use the MSMP representation (title model words) in the same pipeline with the same classifier, so the only difference is the representation.
 
@@ -39,7 +42,9 @@ The step numbers in the comments of the code follow the method:
 
 ## Running it
 
-Needs Python 3.9 or newer and `numpy`, `pandas`, `matplotlib`, `scikit-learn`:
+Needs Python 3.9 or newer and packages: `numpy`, `pandas`, `matplotlib`, `scikit-learn`:
+
+**Main.py :**
 
 ```bash
 pip install numpy pandas matplotlib scikit-learn
@@ -59,7 +64,7 @@ The full run takes a while because every `(b, r)` setting is tuned separately. O
 - `results_plots.png`: PC, PQ, F1* and F1 against the fraction of comparisons (band = mean ± 1 sd)
 - `results_all_pairs.csv`: F1 without LSH (only with `--all-pairs`)
 
-For the paper I split `results_plots.png` into two images by hand (F1*/F1 in the main text, PC/PQ in the appendix).
+**Appendix.py :**
 
 Appendix (same bootstrap splits as `main.py`):
 
@@ -68,4 +73,5 @@ python appendix.py                  # results in results/appendix/
 python appendix.py --bootstraps 5
 ```
 
-The output are the following figures: `A1` (similarity of duplicates vs non-duplicates), `A2` (with vs without weights), `A3` (tuning of `a` and `θ`), the two LaTeX tables `T1` (tokens and filter) and `T2` (coefficients), and csv files with the numbers behind them.
+The output are the following figures: `A1` (similarity of duplicates vs non-duplicates), `A2` (with vs without weights), `
+A3` (tuning of `a` and `θ`), the two LaTeX tables `T1` (tokens and filter) and `T2` (coefficients), and csv files with the numbers behind them.

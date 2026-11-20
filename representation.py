@@ -1,23 +1,19 @@
 """
 representation.py
 =================
-Builds the product representation:
-
+Build the product representation:
 STEP 3 - Cross-shop filtering   keep tokens with df(t) >= 2 and sf(t) >= 2
 STEP 4 - Rarity weights         w(t) = idf(t)^a
 STEP 5 - Weighted Jaccard       J_w(p_i, p_j)
 STEP 6a - Copies                each token t becomes m(t) copies "t#1", ..., "t#m(t)"
-          (the minhashing itself, Step 6b, is in lsh.py)
 
-It also contains the BASELINE representation (MSMP: title model words), so both
-can be run through exactly the same pipeline and compared fairly.
+It also contains the BASELINE representation (MSMP: title model words)..
 """
 
 import math
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-
 from preprocessing import product_tokens
 
 
@@ -60,9 +56,7 @@ def cross_shop_vocabulary(df, sf, min_df=2, min_sf=2):
 # STEP 4 - Rarity weights
 # ------------------------------------------------------------------------
 def idf_weights(vocabulary, df, n_products, a):
-    """w(t) = idf(t)^a  with  idf(t) = log(N / df(t))
-    - a = 0 -> every token weighs 1 (plain Jaccard);
-    - larger a -> rare tokens dominate."""
+    """w(t) = idf(t)^a  with  idf(t) = log(N / df(t))"""
     # loop over all tokens in the set and find their weight
     # note here hyperparameter a enters (the exponent determining how strongly
     # rare tokens are favoured in the weighted representation)
@@ -75,7 +69,7 @@ def idf_weights(vocabulary, df, n_products, a):
 def weighted_jaccard(rep, i, j):
     """
     J_w = (sum of weights of SHARED tokens) / (sum of weights of ALL tokens of i or j).
-    Note that weight(union) = weight(i) + weight(j) - weight(intersection),
+    Use that weight(union) = weight(i) + weight(j) - weight(intersection),
     so only need to loop over the (small) intersection.
     """
     shared = sum(rep.weights[t] for t in rep.sets[i] & rep.sets[j]) # numerator: tokens both products have
@@ -89,11 +83,9 @@ def weighted_jaccard(rep, i, j):
 def multiplicities(weights, max_copies):
     """
     m(t) = round(c * w(t))
-    Choose c such that the heaviest token gets exactly `max_copies` copies:
-        c = max_copies / max_t w(t)
+    c = max_copies / max_t w(t)
     Tokens whose weight is below 1/(2*max_copies) of the heaviest weight round
-    to 0 copies: their weight is negligible, so dropping them barely changes J_w.
-    If all weights are equal (a = 0) one copy each is enough.
+    to 0 copies.
     """
     if not weights:
         return {}
@@ -108,17 +100,16 @@ def multiplicities(weights, max_copies):
 
 
 def expand_with_copies(tokens, m):
-    """E_i: build the set where each token is replaced with m dsitinct copies
+    """E_i: build set where each token is replaced with m dsitinct copies
     Plain Jaccard on these expanded sets = weighted Jaccard with weights m(t)."""
     return [f"{t}#{l}" for t in tokens for l in range(1, m[t] + 1)]
 
 
 # --------------------------------------------------------------------------
-# Combine steps 1-6a together
+# Combine steps 1-6a
 # --------------------------------------------------------------------------
 def build_weighted_representation(products, a, max_copies=30):
-    """Key independent method, cross-shop IDF-weighted token representation.
-    df and sf are computed on the products given (no labels are used)."""
+    """ Pipeline steps 1-6a"""
     raw_sets = [product_tokens(p) for p in products]                     # Steps 1-2
     df, sf = document_and_shop_frequency(raw_sets, [p.shop for p in products])
     vocabulary = cross_shop_vocabulary(df, sf)                           # Step 3
@@ -131,13 +122,13 @@ def build_weighted_representation(products, a, max_copies=30):
 
 
 # -------------------------------------------------------------------------
-# BASELINE - MSMP title model words (van Dam et al., 2016)
+# BASELINE - MSMP title model words
 # -------------------------------------------------------------------------
 # A model word contains both digits and non-digits, e.g. "120hz", "ln46c630".
 MODEL_WORD = re.compile(r"[a-z0-9]*(?:[0-9]+[^0-9, ]+|[^0-9, ]+[0-9]+)[a-z0-9]*")
 
 def build_msmp_representation(products):
-    """Binary (unweighted) set of model words from the title, no filtering."""
+    """Binary set of model words from the title, no filtering."""
     sets = [set(MODEL_WORD.findall(p.title.lower())) for p in products]
     vocabulary = set().union(*sets)
     weights = {t: 1.0 for t in vocabulary}

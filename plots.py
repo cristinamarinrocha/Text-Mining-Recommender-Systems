@@ -4,20 +4,21 @@ plots.py
 """
 
 import matplotlib
-matplotlib.use("Agg")            # draw to a file, no window needed
+matplotlib.use("Agg")            # draw to a file, no extra window needed
 import matplotlib.pyplot as plt
 
 LABELS = {"weighted": "Cross-shop IDF-weighted",
           "msmp": "Title model words (MSMP representation)"}
 STYLES = {"weighted": dict(color="black", marker="o"),
           "msmp": dict(color="grey", marker="s", linestyle="--")}
-LABELLED_R = [1, 4, 7, 12, 20]   # r values whose points get an "r=..." label
+LABELLED_R = [1, 4, 7, 12, 20]   # easy read in plots --> r values whose points get an "r=..." label
 
 
 def plot_results(summary, path, per_bootstrap=None, all_pairs=None):
-    """per_bootstrap: the results of every bootstrap (optional); if given, the
+    """
+    - per_bootstrap: the results of every bootstrap; if given, the
     spread over the bootstraps is drawn as a shaded band.
-    all_pairs: the no-LSH results per bootstrap (optional); if given, their mean
+    - all_pairs: the no-LSH results per bootstrap (optional); their mean
     F1 (+/- one standard deviation) is drawn at fraction 1 in the F1 panel.
     It is the same for both methods (same classifier, no LSH)."""
     if per_bootstrap is not None:

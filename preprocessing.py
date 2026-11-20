@@ -4,9 +4,6 @@ preprocessing.py
 STEP 0 - Loading the data
 STEP 1 - Generic normalisation
 STEP 2 - Tokenisation
-
-Everything in this file is "product-agnostic": the rules only deal with text
-formatting and units, never with TV-specific attributes.
 """
 
 import html

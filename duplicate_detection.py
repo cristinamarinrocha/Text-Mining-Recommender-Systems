@@ -3,10 +3,10 @@ duplicate_detection.py
 ======================
 STEP 7 - Duplicate detection on the LSH candidate pairs only.
 
-Two classifiers, chosen with  python main.py --classifier logit|threshold :
+Two possible classifiers, chosen with  python main.py --classifier logit|threshold :
 
-PART 1 - Threshold rule
-PART 2 (default) - logistic regression followed by clustering
+Part 1 - Threshold rule
+Part 2 (default) - logistic regression followed by clustering
     7a. Pair features  x(i, j)          (generic, no product knowledge)
     7b. Logistic regression             P(duplicate | x)
     7c. Clustering
@@ -24,7 +24,7 @@ from representation import weighted_jaccard
 from evaluation import f1_measure
 
 
-# PART 1 - threshold
+# Part 1 - threshold rule
 # ---------------------------------------------------------------------------
 THETA_GRID = np.round(np.arange(0.05, 1.00, 0.025), 3)
 
@@ -106,9 +106,7 @@ class PairFeatures:
         # plain Jaccard of the title tokens
         ti, tj = self.title_tokens[i], self.title_tokens[j]
         title_jaccard = len(ti & tj) / len(ti | tj) if ti | tj else 0.0
-        # 2./3. Shared code and Code conflict
-        # code-like tokens: shared one (strong evidence for a duplicate)
-        #  or both have codes but none in common (evidence against)
+        # 2./3. Shared code and code conflict
         ci, cj = self.codes[i], self.codes[j]
         code_match = 1.0 if ci & cj else 0.0
         code_conflict = 1.0 if (ci and cj and not ci & cj) else 0.0
@@ -121,7 +119,7 @@ class PairFeatures:
         return (title_jaccard, code_match, code_conflict, unit_conflicts)
 
     def cov_matrix(self, pairs):
-        """Covariate matrix containing all features for logit.
+        """Covariate matrix containing all 4 features for the logit.
          One row per pair (in the order of `pairs`)."""
         rows = []
         for pair in pairs:
@@ -140,7 +138,7 @@ def fit_logistic(X, y):
     if y.sum() < 2 or (len(y) - y.sum()) < 2:
         return None
     scaler = StandardScaler().fit(X)
-    # C in the apckage is like a lamda in ridge penalty
+    # C in the package is like a lamda in ridge penalty
     # C=100 --> Lambda=0.01
     clf = LogisticRegression(C=100, solver="lbfgs", max_iter=1000)
     clf.fit(scaler.transform(X), y)
@@ -154,10 +152,10 @@ def predict_proba(model, X):
 # -------------------------------------------------------------------------
 def cluster_pairs(pairs, probs, shops, candidates, min_prob=PROBABILITY_GRID[0]):
     """
-    Pairwise predictions are not transitive by themselves, so we put
-    the products in clusters and every pair inside a cluster is a duplicate.
+    Pairwise predictions are not transitive by themselves -->  put the products in clusters
+    and every pair inside a cluster is a duplicate.
     Distance between two products = 1 - probability.
-    Go through the pairs from the highest to the lowest probability (= single linkage) and
+    Go through the pairs from the highest to the lowest probability and
     merge the clusters of i and j, except when (distance = infinity in MSM):
       - both clusters have a product of the same shop  (same shop heuristic)
       - some pair between the two clusters is not an LSH candidate pair
@@ -200,7 +198,7 @@ def cluster_pairs(pairs, probs, shops, candidates, min_prob=PROBABILITY_GRID[0])
 # -------------------------------------------------------------------------
 def scored_pairs(candidates, features, shops, model):
     """
-    This function combines steps 7b and 7c.
+    Combines steps 7b and 7c.
     Pairs that end in the same cluster, with their probability."""
     pairs = [(i, j) for i, j in candidates if shops[i] != shops[j]]
     if model is None or not pairs:

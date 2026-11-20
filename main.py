@@ -10,14 +10,6 @@ Pipeline per bootstrap and per LSH setting (b, r):
                   -> F1 (final duplicate detection)
 Both my method "weighted" and baseline "msmp" are evaluated, with the
 same step-7 classifier.
-
-Usage (from inside the code folder):
-    python main.py                          # full run, 10 bootstraps, new classifier
-    python main.py --bootstraps 1           # quick test
-    python main.py --classifier threshold   # old classifier (results_threshold/)
-    python main.py --all-pairs              # also classify ALL pairs without LSH
-                                            # (reference point, fraction = 1)
-    python main.py --data path/to/TVs-all-merged.json --out my_results
 """
 
 import argparse
@@ -71,12 +63,12 @@ class SubsetPipeline:
         if a not in self._cache: # in first round rep and sig aren't  in self._cache yet so we build them
             rep = build_representation(self.method, self.products, a) # representation
             sig = self.hasher.signature_matrix(rep.elements) # signature
-            self._cache[a] = (rep, sig) # store and reuse in later rounds (b, r)
+            self._cache[a] = (rep, sig)         # store and reuse in later rounds (b, r)
         return self._cache[a]
 
     @property
     def features(self):
-        """Pair features of the step-7 classifier (built once)."""
+        """Pair features of the step 7 classifier (built once)."""
         if self._features is None:
             self._features = PairFeatures(self.products)
         return self._features
@@ -91,7 +83,7 @@ def tune_step7(classifier, cands, rep, subset):
         sims = candidate_similarities(cands, rep, subset.shops)
         theta, f1 = tune_threshold(sims, subset.true_pairs)
         return None, theta, f1
-    return fit_and_tune(cands, subset.features, subset.shops, subset.true_pairs) # logit classifier
+    return fit_and_tune(cands, subset.features, subset.shops, subset.true_pairs) # logit + clustering classifier
 
 
 def apply_step7(classifier, cands, rep, subset, model, theta):
@@ -194,7 +186,7 @@ def main_run(data_path, n_bootstraps, out_dir, classifier="logit", all_pairs=Fal
                       f"PC={row['PC']:.3f}  PQ={row['PQ']:.3f}  "
                       f"F1*={row['F1_star']:.3f}  F1={row['f1']:.3f}  (a={best['a']})")
 
-            # Optional reference: no LSH, classify all pairs of the test set
+            # Optional all_pairs: no LSH, classify all pairs of the test set
             if all_pairs:
                 all_pairs_rows.append(
                     classify_all_pairs(boot, method, a_values, train, test, classifier))

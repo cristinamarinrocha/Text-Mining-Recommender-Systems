@@ -19,8 +19,7 @@ PRIME = 2**31 - 1
 def element_to_int(element):
     """
     Minhash needs numbers, but our elements are strings like 'abc#2'.
-    zlib.crc32 -->  function that turns a string into an
-    integer and gives the same number every run.
+    zlib.crc32 -->  function that turns a string into an integer and gives the same number every run.
     """
     return zlib.crc32(element.encode("utf-8")) % PRIME
 
@@ -32,8 +31,6 @@ class MinHasher:
     """
     Simulates n random permutations with n random hash functions
         h_k(x) = (alpha_k * x + beta_k) mod P .
-    The minhash of a set under h_k is the smallest hash value among its elements
-    (element that comes first in the random order from lecture).
     Property used by LSH:  P[minhash_k(A) == minhash_k(B)] = Jaccard(A, B).
     """
 
@@ -76,7 +73,7 @@ class MinHasher:
 def lsh_candidate_pairs(signatures, bands, rows):
     """
     Split each signature into  bands of rows
-    Within each band, products whose band-part is identical land in the same bucket;
+    Within each band, products that are equal in every row of the band land in the same bucket and
     every pair inside a bucket becomes a candidate pair.
     P[candidate] = 1 - (1 - s^r)^b  (the S-curve).
     Returns a set of pairs (i, j) with i < j.
