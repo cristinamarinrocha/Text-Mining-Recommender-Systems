@@ -43,10 +43,12 @@ from evaluation import (bootstrap_split, true_duplicate_pairs, lsh_metrics,
 from main import N_HASHES, R_VALUES, MAX_COPIES, SEED
 
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
-PAPER_METHOD = dict(color=BLUE, linestyle="-", marker="o", label="Cross-shop IDF-weighted, a = 8")
-BASE = dict(color=ORANGE, linestyle="--", marker="s", label="Title model words (MSMP representation)")
-NOWEIGHT = dict(color=AQUA, linestyle=":", marker="^", label="Cross-shop tokens, unweighted (a = 0)")
+# same colours as plots.py: pink = cross-shop IDF-weighted, blue = MSMP
+# grey for the unweighted tokens and the train curves (green is MSMP+ in plots.py)
+PINK, BLUE, GREY = "#c2185b", "#1f6fd1", "#7a7a7a"
+PAPER_METHOD = dict(color=PINK, linestyle="-", marker="o", label="Cross-shop IDF-weighted, a = 8")
+BASE = dict(color=BLUE, linestyle="--", marker="s", label="Title model words (MSMP representation)")
+NOWEIGHT = dict(color=GREY, linestyle=":", marker="^", label="Cross-shop tokens, unweighted (a = 0)")
 A_EXTENDED = [0, 2, 4, 6, 8, 10, 12]
 BEST_A = 8           # the value chosen by the tuning in almost every setting
 R_F1, R_F1STAR = 3, 7  # settings with the best F1 and the best F1* in main.py
@@ -222,7 +224,7 @@ def plot_a3(tune, theta, out):
     a = g.index.values
     band(axes[0], a, g[("f1_test", "mean")].values, g[("f1_test", "std")].values,
          dict(PAPER_METHOD, label="Test F1"))
-    axes[0].plot(a, g[("f1_train", "mean")].values, color=AQUA, linestyle=":", marker="^",
+    axes[0].plot(a, g[("f1_train", "mean")].values, color=GREY, linestyle=":", marker="^",
                  label="Train F1 (used for tuning)")
     axes[0].set_title(f"F1 against a  (r = {R_F1}, b = {N_HASHES // R_F1})", fontsize=9)
     band(axes[1], a, g[("F1_star_r7", "mean")].values, g[("F1_star_r7", "std")].values,
@@ -239,7 +241,7 @@ def plot_a3(tune, theta, out):
     t = theta.groupby("theta").agg(["mean", "std"])
     band(axes[2], t.index.values, t[("f1_test", "mean")].values,
          t[("f1_test", "std")].values, dict(PAPER_METHOD, label="Test F1", markersize=3))
-    axes[2].plot(t.index.values, t[("f1_train", "mean")].values, color=AQUA, linestyle=":",
+    axes[2].plot(t.index.values, t[("f1_train", "mean")].values, color=GREY, linestyle=":",
                  marker="^", markersize=3, label="Train F1 (used for tuning)")
     chosen = theta[theta.chosen].theta
     axes[2].axvspan(chosen.min(), chosen.max(), color="0.9", zorder=0,

@@ -8,7 +8,8 @@ Pipeline per bootstrap and per LSH setting (b, r):
     2. TEST set   -> same pipeline with the tuned parameters
                   -> PQ, PC, F1*, fraction of comparisons (LSH step)
                   -> F1 (final duplicate detection)
-Both my method "weighted" and baseline "msmp" are evaluated, with the
+My method "weighted" and the baselines "msmp" (title model words) and
+"msmpplus" (MSMP+: title + value model words) are evaluated, with the
 same step-7 classifier.
 """
 
@@ -20,7 +21,8 @@ import numpy as np
 import pandas as pd
 
 from preprocessing import load_products
-from representation import build_weighted_representation, build_msmp_representation
+from representation import (build_weighted_representation, build_msmp_representation,
+                            build_msmpplus_representation)
 from lsh import MinHasher, lsh_candidate_pairs, s_curve_threshold
 from duplicate_detection import (candidate_similarities, predict, tune_threshold, THETA_GRID,
                                  PairFeatures, fit_and_tune, classify)
@@ -40,6 +42,8 @@ SEED = 2026
 def build_representation(method, products, a):
     if method == "weighted":
         return build_weighted_representation(products, a, MAX_COPIES)
+    if method == "msmpplus":
+        return build_msmpplus_representation(products)  # second baseline (MSMP+)
     return build_msmp_representation(products)
 
 
@@ -146,8 +150,8 @@ def main_run(data_path, n_bootstraps, out_dir, classifier="logit", all_pairs=Fal
         print(f"\nBootstrap {boot + 1}/{n_bootstraps}: "
               f"{len(train_products)} train, {len(test_products)} test products")
 
-        # Loop over baseline and my weighted method
-        for method in ["weighted", "msmp"]:
+        # Loop over my weighted method and the two baselines
+        for method in ["weighted", "msmp", "msmpplus"]:
             a_values = A_VALUES if method == "weighted" else [None]
             #split train and test
             train = SubsetPipeline(train_products, method, hasher)
@@ -187,7 +191,9 @@ def main_run(data_path, n_bootstraps, out_dir, classifier="logit", all_pairs=Fal
                       f"F1*={row['F1_star']:.3f}  F1={row['f1']:.3f}  (a={best['a']})")
 
             # Optional all_pairs: no LSH, classify all pairs of the test set
-            if all_pairs:
+            # (with the logit the result does not depend on the representation, so
+            # no need to run it again for msmpplus)
+            if all_pairs and not (method == "msmpplus" and classifier == "logit"):
                 all_pairs_rows.append(
                     classify_all_pairs(boot, method, a_values, train, test, classifier))
 

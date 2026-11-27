@@ -135,3 +135,52 @@ def build_msmp_representation(products):
     elements = [list(s) for s in sets]
     total = [float(len(s)) for s in sets]
     return Representation(sets, weights, elements, total)
+
+
+# -------------------------------------------------------------------------
+# BASELINE 2 - MSMP+ (Hartveld et al., 2018): title + value model words
+# -------------------------------------------------------------------------
+MSMPP_INCH = re.compile(r"[\s\-]*(?:inches|inch|\"|”)")
+MSMPP_HERTZ = re.compile(r"[\s\-]*(?:hertz|hz)\b")
+VALUE_MODEL_WORD = re.compile(r"^(\d+(?:\.\d+)?)[a-z]*$")
+
+
+def msmpplus_clean(text):
+    """MSMP+ data cleaning (only inch and hz, nothing else)."""
+    text = text.lower()
+    text = MSMPP_INCH.sub("inch", text)
+    return MSMPP_HERTZ.sub("hz", text)
+
+
+def value_model_words(value):
+    words = set()
+    for token in value.split():
+        match = VALUE_MODEL_WORD.match(token)
+        if match:
+            words.add(match.group(1))
+    return words
+
+
+def build_msmpplus_representation(products):
+    """
+    MSMP+ representation: each product is the set of model words from its title
+    and from its attribute values
+    """
+    titles = [msmpplus_clean(p.title) for p in products]
+    values = [[msmpplus_clean(v) for v in p.features.values()] for p in products]
+    title_mw = [set(MODEL_WORD.findall(t)) for t in titles]
+    all_title_mw = set().union(*title_mw)   # MW_title of the set
+
+    sets = []
+    for own_title_mw, vals in zip(title_mw, values):
+        s = set(own_title_mw)
+        for v in vals:
+            s |= set(MODEL_WORD.findall(v)) & all_title_mw   # title model words found in values
+            s |= value_model_words(v)                          # numeric value model words
+        sets.append(s)
+
+    vocabulary = set().union(*sets)
+    weights = {t: 1.0 for t in vocabulary}   #  every model word counts the same
+    elements = [list(s) for s in sets]
+    total = [float(len(s)) for s in sets]
+    return Representation(sets, weights, elements, total)

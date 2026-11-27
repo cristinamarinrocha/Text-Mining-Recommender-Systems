@@ -18,7 +18,7 @@ The main idea is the representation that LSH runs on:
 
 The candidate pairs are then classified with a logistic regression on 4 features from the titles (title similarity, shared code, conflicting code, conflicting units), followed by a clustering step (MSM paper style) so the predicted duplicates are transitive.
 
-As baseline I use the MSMP representation (title model words) in the same pipeline with the same classifier, so the only difference is the representation.
+As baselines I use the MSMP representation and the MSMP+ representation in the same pipeline with the same classifier, so the only difference is the representation.
 
 ## Files
 

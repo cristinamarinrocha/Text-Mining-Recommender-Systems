@@ -8,9 +8,13 @@ matplotlib.use("Agg")            # draw to a file, no extra window needed
 import matplotlib.pyplot as plt
 
 LABELS = {"weighted": "Cross-shop IDF-weighted",
-          "msmp": "Title model words (MSMP representation)"}
-STYLES = {"weighted": dict(color="black", marker="o"),
-          "msmp": dict(color="grey", marker="s", linestyle="--")}
+          "msmp": "Title model words (MSMP representation)",
+          "msmpplus": "Title + value model words (MSMP+ representation)"}
+# one colour per representation (marker and line style also differ, so it is still
+# readable when printed in black and white)
+STYLES = {"weighted": dict(color="#c2185b", marker="o"),                   # pink
+          "msmp": dict(color="#1f6fd1", marker="s", linestyle="--"),       # blue
+          "msmpplus": dict(color="#1b7a3e", marker="^", linestyle=":")}    # dark green
 LABELLED_R = [1, 4, 7, 12, 20]   # easy read in plots --> r values whose points get an "r=..." label
 
 
@@ -27,8 +31,10 @@ def plot_results(summary, path, per_bootstrap=None, all_pairs=None):
                ("F1_star", "F1*-measure"), ("f1", "F1-measure")]
     fig, axes = plt.subplots(2, 2, figsize=(9, 7))
     for ax, (column, title) in zip(axes.ravel(), metrics):
-        for method, group in summary.groupby("method"):
-            group = group.sort_values("fraction")
+        for method in ["weighted", "msmp", "msmpplus"]:   # my method first in the legend
+            if method not in set(summary["method"]):
+                continue
+            group = summary[summary["method"] == method].sort_values("fraction")
             ax.plot(group["fraction"], group[column], label=LABELS[method],
                     markersize=3, **STYLES[method])
             if per_bootstrap is not None:
@@ -44,12 +50,17 @@ def plot_results(summary, path, per_bootstrap=None, all_pairs=None):
             ax.errorbar([1.0], [f1.mean()], yerr=[f1.std()], fmt="D", color="black",
                         markerfacecolor="white", markersize=5, capsize=3,
                         label="All pairs, no LSH")
-            ax.legend(fontsize=7, loc="lower right")
+            # only the diamond here, the curves are already in the F1* legend next to it
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles[-1:], labels[-1:], fontsize=7, loc="lower right")
         ax.set_title(title)
         ax.set_xscale("log")      # most of the action happens at very small fractions
         ax.set_xlabel("Fraction of comparisons (log scale)")
         ax.grid(alpha=0.3)
-    axes[0, 0].legend(fontsize=8)
+    # one legend per row of the figure, in an empty corner, so the top half (PC, PQ)
+    # and the bottom half (F1*, F1) can also be used as separate figures
+    axes[0, 1].legend(fontsize=7, loc="upper right")
+    axes[1, 0].legend(fontsize=7, loc="upper right")
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
